@@ -1,9 +1,6 @@
 //%attributes = {}
 
-var $macroFile; $baseFile : 4D:C1709.File
-
-$macroFile:=Folder:C1567(fk database folder:K87:14).file("Macros v2/Macros.xml")
-
+var $baseFile : 4D:C1709.File
 $baseFile:=Folder:C1567(fk resources folder:K87:11).file("emojibase.raw.json")
 If (Not:C34($baseFile.exists))
 	ASSERT:C1129(False:C215; "base file not exists")
@@ -15,12 +12,15 @@ $base:=JSON Parse:C1218($baseFile.getText())
 
 var $words : Variant
 
-var $macroContent; $word : Text
-$macroContent:="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<!DOCTYPE macros SYSTEM \"http://www.4d.com/dtd/2007/macros.dtd\">\n<macros>\n"
+var $word : Text
 
 var $hexas; $emoji; $hexa : Text
 var $hexasCol : Collection
 var $decimal : Integer
+
+var $macros : Object
+$macros:=New object:C1471
+
 For each ($hexas; $base)
 	
 	$hexasCol:=Split string:C1554($hexas; "-")
@@ -49,11 +49,25 @@ For each ($hexas; $base)
 	
 	For each ($word; $words)
 		
-		$macroContent+="<macro name=\":"+$word+":\" type_ahead=\"true\" version=\"2\">\n    <text>"+$emoji+"</text>\n  </macro>"
+		$macros[$word]:=$emoji
 		
 	End for each 
 	
 	//End if 
+	
+End for each 
+
+// MARK: write macro file
+
+var $macroFile : 4D:C1709.File
+$macroFile:=Folder:C1567(fk database folder:K87:14).file("Macros v2/Macros.xml")
+
+var $macroContent : Text
+$macroContent:="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n<!DOCTYPE macros SYSTEM \"http://www.4d.com/dtd/2007/macros.dtd\">\n<macros>\n"
+
+For each ($word; OB Keys:C1719($macros).sort())
+	
+	$macroContent+="<macro name=\":"+$word+":\" type_ahead=\"true\" version=\"2\">\n    <text>"+$macros[$word]+"</text>\n  </macro>"
 	
 End for each 
 
